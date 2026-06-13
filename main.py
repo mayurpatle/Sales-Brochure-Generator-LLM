@@ -148,8 +148,25 @@ brochure_system_prompt = (
     "from a company website and creates a short, engaging brochure about the "
     "company for prospective customers, investors, and recruits. Respond in "
     "markdown. Include details of company culture, customers, and careers/jobs "
-    "if you have the information."
+    "if you have the information.\n"
+    "Output the markdown content directly. Do NOT wrap your whole response in "
+    "triple backticks or a ```markdown code fence."
 )
+
+
+def strip_code_fences(text):
+    """
+    If the model wrapped the whole brochure in a ```markdown ... ``` fence,
+    remove it so the saved file renders as real markdown (not a code block).
+    """
+    t = text.strip()
+    if t.startswith("```"):
+        lines = t.splitlines()
+        lines = lines[1:]                                   # drop opening ``` / ```markdown
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]                              # drop closing ```
+        t = "\n".join(lines).strip()
+    return t
 
 
 def get_brochure_user_prompt(company_name, url):
@@ -203,6 +220,7 @@ if __name__ == "__main__":
     print("\nGenerating brochure...\n")
 
     brochure = stream_brochure(company_name, url)
+    brochure = strip_code_fences(brochure)
 
     output_path = "brochure.md"
     with open(output_path, "w", encoding="utf-8") as f:
